@@ -25,7 +25,7 @@ def readPajek(filename):
 
             if isReadingVertices:
                 parts = line.split()
-                print(parts)
+                #print(parts)
 
                 if len(parts) >= 2:
                     VerId = int(parts[0])

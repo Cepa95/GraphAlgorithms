@@ -1,59 +1,80 @@
 from readPajek import readPajek, convertToAdjList
 
 
-def dfs(graph, node, visited):
-    stack = [node]
-    component = []
+def bfs(start, graph):
+    visited = []
+    queue = [start]
 
-    while stack:
-        current = stack.pop()
-        if current not in visited:
-            visited.add(current)
-            component.append(current)
-            if current in graph:
-                stack.extend(graph[current])
-    return component
+    while queue:
+        vertex = queue.pop(0)
+        if vertex not in visited:
+            visited.append(vertex)
+            neighbors = graph.get(vertex, [])
+        
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+    return visited
 
 
-def findComponents(graph):
+def findComponents(vertices, edges):
+    graph = convertToAdjList(vertices, edges, True)
+    #print(graph)
     visited = set()
     components = []
 
-    for node in graph:
-        if node not in visited:
-            component = dfs(graph, node, visited)
+    for vertex in vertices:
+        if vertex not in visited:
+            component = bfs(vertex, graph)
             components.append(component)
+            visited.update(component)
+
     return components
 
 
-def sizeOfLargestComponent(components):
-    return max(len(component) for component in components)
+def findBiggestCompanies(vertices, edges):
+    graph = convertToAdjList(vertices, edges, True)
+    countOwnedCompanies = {}
 
+    for company in vertices:
+        ownedCompanies = bfs(company, graph)
+        countOwnedCompanies[company] = len(ownedCompanies) - 1
 
-def countEdges(graph, component):
-    edgeCount = 0
-    for node in component:
-        if node in graph:
-            edgeCount += len(graph[node])
-    return edgeCount
+    sortOwnedCompanies = list(countOwnedCompanies.items())
+    sortOwnedCompanies.sort(key=lambda x: x[1], reverse=True)
+
+    return sortOwnedCompanies[:10]
 
 
 def main():
-    filename = "football.net"
-
+    filename = "eva.net"
     vertices, edges, isDirected = readPajek(filename)
-    graph = convertToAdjList(vertices, edges, isDirected)
 
-    components = findComponents(graph)
-    numComponents = len(components)
-    largestComponent = sizeOfLargestComponent(components)
+    print(f"Total number of companies (vertices): {len(vertices)}")
+    print(f"Total number of ownership relations (edges): {len(edges)}")
 
-    print(f"Number of components: {numComponents}")
-    print(f"Size of the largest component: {largestComponent}")
-    print("\nFirst ten components and their edge counts:")
-    for component in components[:10]:
-        edgeCount = countEdges(graph, component)
-        print(f"Component {component[0]}: Size = {len(component)}, Edges = {edgeCount}")
+    components = findComponents(vertices, edges)
+    numCompanies = len(components)
+    largestComponentSize = max(len(component) for component in components)
+
+    print(f"Number of components: {numCompanies}")
+    print(f"Size of largest component: {largestComponentSize}")
+
+    # Distribution of component sizes
+    componentSize = [len(component) for component in components]
+
+    componentSize.sort(reverse=True)
+    print(f"Distribution of component sizes: {componentSize[:10]}")
+
+    # Number of isolated nodes
+    isolatedNodes = sum(1 for size in componentSize if size == 1)
+    print(f"Number of isolated nodes: {isolatedNodes}")
+
+    biggestCompanies = findBiggestCompanies(vertices, edges)
+    print("Top 10 companies and the number of companies they own:")
+
+    for company, count in biggestCompanies:
+        print(f"Company {vertices[company]} owns {count} companies")
 
 
 if __name__ == "__main__":
